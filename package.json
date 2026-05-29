@@ -14,6 +14,7 @@
     "productName": "BLACKJACK ANTEFALL",
     "files": [
       "electron-main.js",
+      "preload.js",
       "index.html",
       "carddraw.mp3",
       "lose.mp3",

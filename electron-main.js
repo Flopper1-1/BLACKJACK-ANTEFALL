@@ -13,23 +13,31 @@ let currentPresence = {
   state: "Menu"
 };
 
+let isRpcReady = false;
+
 function setDiscordPresence() {
+  if (!isRpcReady || !rpc) return;
+  
   rpc.setActivity({
     details: currentPresence.details,
     state: currentPresence.state,
     startTimestamp: startedAt,
     largeImageKey: "logo",
     largeImageText: "BLACKJACK: ANTEFALL",
+    instance: false,
     buttons: [
       {
         label: "Download",
         url: "https://github.com/Flopper1-1/BLACKJACK-ANTEFALL"
       }
     ]
-  });
+  }).catch(() => {});
 }
 
-rpc.on("ready", setDiscordPresence);
+rpc.on("ready", () => {
+  isRpcReady = true;
+  setDiscordPresence();
+});
 
 ipcMain.on("update-presence", (event, data) => {
   if (data.screen === "menu") {
@@ -43,9 +51,7 @@ ipcMain.on("update-presence", (event, data) => {
       state: `Cash: $${Math.round(data.cash).toLocaleString()}`
     };
   }
-  if (rpc && rpc.setActivity) {
-    setDiscordPresence();
-  }
+  setDiscordPresence();
 });
 
 rpc.login({ clientId: DISCORD_CLIENT_ID }).catch(() => {});

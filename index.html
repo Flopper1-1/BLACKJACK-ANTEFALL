@@ -1398,18 +1398,30 @@
       state.cash += totalReturn;
       state.blindProfit = state.cash - state.blindStartCash;
       const clearCashTarget = state.blindStartCash + state.anteTarget;
+      
+      console.log(`Hand Settled. Cash: ${state.cash}, Profit: ${state.blindProfit}, Target: ${state.anteTarget}`);
+
       const overflow = Math.max(0, state.blindProfit - state.anteTarget);
       const cleared = state.cash >= clearCashTarget;
+      
       if (cleared) {
         const gained = Math.floor(overflow / 50);
         const convertedCash = gained * 50;
-        state.cash -= convertedCash;
-        state.tokens += gained;
-        state.blindProfit = state.cash - state.blindStartCash;
+        
+        if (gained > 0) {
+          state.cash -= convertedCash;
+          state.tokens += gained;
+          state.blindProfit = state.cash - state.blindStartCash;
+          console.log(`Converted ${money(convertedCash)} overflow into ${gained} token(s). New Cash: ${state.cash}`);
+          addLog(`${blindName()} cleared. Converted ${money(convertedCash)} overflow into ${gained} token(s).`);
+          setMessage(`Blind cleared! Converted ${money(convertedCash)} overflow into ${gained} win token(s).`, "burst");
+        } else {
+          addLog(`${blindName()} cleared at ${money(clearCashTarget)}.`);
+          setMessage(`Blind cleared at ${money(clearCashTarget)}!`, "burst");
+        }
+        
         state.phase = "shop";
         state.shopOpen = true;
-        addLog(`${blindName()} cleared at ${money(clearCashTarget)}. Converted ${money(convertedCash)} overflow into ${gained} win token(s).`);
-        setMessage(`Blind cleared! Converted ${money(convertedCash)} overflow into ${gained} win token(s).`, "burst");
       } else {
         state.phase = "betting";
         setMessage(`Hand settled (${money(totalProfit)} profit). Need ${money(state.anteTarget - state.blindProfit)} more blind profit.`);
@@ -1418,7 +1430,6 @@
       if (lastChanceUsed) setMessage(`Last Chance fired. Re-scored against dealer total ${dealerTotal}.`, "burst");
       checkRunEnd();
       render();
-      updateDiscordPresence();
     }
 
     function flushPayoutFor(hand) {

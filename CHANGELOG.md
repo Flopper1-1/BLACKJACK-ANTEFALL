@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.3
+
+- Fixed Discord Rich Presence not updating game stats.
+- Added explicit "In Main Menu" status to Discord presence.
+- Ensured Discord presence updates on every UI render.
+- Refined token conversion and loss floor logic for better accuracy.
+
 ## v1.0.2
 
 - Updated loss floor to update per blind.

@@ -956,7 +956,8 @@
         window.electronAPI.updatePresence({
           ante: state.ante,
           cash: state.cash,
-          target: state.anteTarget
+          target: state.anteTarget,
+          screen: state.screen
         });
       }
     }
@@ -1652,6 +1653,7 @@
       renderControls();
       renderShop();
       renderLog();
+      updateDiscordPresence();
       const maxBet = Math.max(1, Math.floor(state.cash));
       el.betInput.max = maxBet;
       if (state.phase === "betting" && Number(el.betInput.value) > maxBet) el.betInput.value = maxBet;
@@ -1704,6 +1706,7 @@
 
     document.querySelectorAll('button').forEach(button => button.type = 'button');
 
+    showScreen("menu");
     render();
   </script>
 </body>

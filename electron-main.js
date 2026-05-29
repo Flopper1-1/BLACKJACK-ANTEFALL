@@ -32,10 +32,17 @@ function setDiscordPresence() {
 rpc.on("ready", setDiscordPresence);
 
 ipcMain.on("update-presence", (event, data) => {
-  currentPresence = {
-    details: `Ante: ${data.ante} | Quota: $${data.target.toLocaleString()}`,
-    state: `Cash: $${Math.round(data.cash).toLocaleString()}`
-  };
+  if (data.screen === "menu") {
+    currentPresence = {
+      details: "In Main Menu",
+      state: "Preparing for the next run"
+    };
+  } else {
+    currentPresence = {
+      details: `Ante: ${data.ante} | Quota: $${data.target.toLocaleString()}`,
+      state: `Cash: $${Math.round(data.cash).toLocaleString()}`
+    };
+  }
   if (rpc && rpc.setActivity) {
     setDiscordPresence();
   }

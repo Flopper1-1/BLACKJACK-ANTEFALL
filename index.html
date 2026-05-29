@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLACKJACK: ANTEFALL - Beta</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a1114;
+      --panel: rgba(15, 24, 28, 0.86);
+      --panel-strong: rgba(20, 34, 39, 0.96);
+      --ink: #f4f0df;
+      --muted: #9fb1ac;
+      --gold: #f3bd4e;
+      --gold-2: #ffdd83;
+      --green: #53d68c;
+      --red: #ff5f6d;
+      --cyan: #62d7ff;
+      --purple: #b789ff;
+      --line: rgba(255, 255, 255, 0.12);
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(83, 214, 140, 0.18), transparent 28rem),
+        radial-gradient(circle at 84% 18%, rgba(243, 189, 78, 0.15), transparent 22rem),
+        linear-gradient(135deg, #071013 0%, #13251f 42%, #151216 100%);
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.42;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .menu {
+      position: relative;
+      min-height: 100vh;
+      place-items: center;
+      padding: 2rem;
+      overflow: hidden;
+    }
+
+    .menu.active {
+      display: grid;
+    }
+
+    .menu::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(255,255,255,0.04) 50%, transparent 51%),
+        linear-gradient(0deg, transparent 49%, rgba(255,255,255,0.035) 50%, transparent 51%);
+      background-size: 74px 74px;
+      transform: rotate(-9deg) scale(1.1);
+      animation: tableDrift 18s linear infinite;
+      opacity: 0.45;
+    }
+
+    .menu-card {
+      width: min(920px, 100%);
+      position: relative;
+      z-index: 1;
+      padding: clamp(1.4rem, 4vw, 3.2rem);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(13, 24, 29, 0.96), rgba(27, 39, 32, 0.9));
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.44);
+    }
+
+    .beta-stamp {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.55rem;
+      border: 1px solid rgba(255, 95, 109, 0.6);
+      border-radius: 4px;
+      color: #ffd4d8;
+      background: rgba(255, 95, 109, 0.12);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 1rem 0 0.65rem;
+      font-size: clamp(2.4rem, 8vw, 6.4rem);
+      line-height: 0.92;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      max-width: 720px;
+      margin: 0 0 1.6rem;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.2vw, 1.25rem);
+      line-height: 1.55;
+    }
+
+    .menu-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 1.4rem;
+    }
+
+    .primary-btn, .ghost-btn, .danger-btn {
+      min-height: 44px;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #d79822, #ffe093);
+      color: #1c1304;
+      box-shadow: 0 12px 30px rgba(243, 189, 78, 0.22);
+    }
+
+    .ghost-btn {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .danger-btn {
+      background: rgba(255, 95, 109, 0.16);
+      border: 1px solid rgba(255, 95, 109, 0.35);
+      color: #ffe1e4;
+    }
+
+    .quick-rules {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.7rem;
+      margin-top: 1.6rem;
+    }
+
+    .rule-tile, .stat-card, .shop-card, .upgrade-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .rule-tile {
+      padding: 0.8rem;
+    }
+
+    .rule-tile strong {
+      display: block;
+      margin-bottom: 0.28rem;
+      color: var(--gold-2);
+    }
+
+    .rule-tile span {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .game-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      padding: 0.85rem;
+      gap: 0.85rem;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1.15fr 2fr auto;
+      gap: 0.8rem;
+      align-items: stretch;
+    }
+
+    .brand-strip, .status-strip, .phase-actions {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 48px var(--shadow);
+    }
+
+    .brand-strip {
+      padding: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    .brand-title {
+      font-weight: 950;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .brand-title small {
+      display: block;
+      margin-top: 0.25rem;
+      color: #ffc5cb;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.55rem;
+      padding: 0.65rem;
+    }
+
+    .stat-card {
+      padding: 0.55rem 0.65rem;
+      min-height: 58px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      margin-top: 0.25rem;
+      font-size: 1rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .phase-actions {
+      padding: 0.65rem;
+      display: flex;
+      gap: 0.55rem;
+      align-items: center;
+    }
+
+    .table-grid {
+      display: grid;
+      grid-template-columns: minmax(290px, 1fr) minmax(360px, 1.45fr) minmax(290px, 0.95fr);
+      gap: 0.85rem;
+      min-height: 0;
+    }
+
+    .side-panel, .table-panel, .shop-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 55px var(--shadow);
+      backdrop-filter: blur(16px);
+      min-height: 0;
+    }
+
+    .side-panel, .shop-panel {
+      padding: 0.9rem;
+      overflow: auto;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .panel-title span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .meter {
+      height: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      box-shadow: 0 0 18px rgba(83, 214, 140, 0.45);
+      transition: width 0.45s cubic-bezier(.2,.9,.2,1);
+    }
+
+    .blind-list {
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.85rem;
+    }
+
+    .blind-step {
+      padding: 0.65rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .blind-step.active {
+      border-color: rgba(243, 189, 78, 0.65);
+      box-shadow: inset 0 0 0 1px rgba(243, 189, 78, 0.2), 0 0 22px rgba(243, 189, 78, 0.1);
+    }
+
+    .blind-step.done {
+      border-color: rgba(83, 214, 140, 0.45);
+      color: #ccffdf;
+    }
+
+    .joker-list {
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.8rem;
+    }
+
+    .owned-joker {
+      padding: 0.65rem;
+      border: 1px solid rgba(243, 189, 78, 0.24);
+      border-radius: 8px;
+      background: rgba(243, 189, 78, 0.07);
+    }
+
+    .owned-joker strong {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      color: var(--gold-2);
+    }
+
+    .owned-joker p {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.35;
+    }
+
+    .table-panel {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .felt {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        radial-gradient(circle at 50% 32%, rgba(83, 214, 140, 0.2), transparent 34rem);
+      background-size: 42px 42px, 42px 42px, auto;
+      opacity: 0.4;
+      pointer-events: none;
+      animation: feltPulse 7s ease-in-out infinite;
+    }
+
+    .table-section, .controls, .message-line {
+      position: relative;
+      z-index: 1;
+    }
+
+    .table-section {
+      padding: 1rem;
+    }
+
+    .hand-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.8rem;
+      margin-bottom: 0.6rem;
+      color: var(--muted);
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .hand-total {
+      color: var(--gold-2);
+    }
+
+    .cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.62rem;
+      min-height: 138px;
+      align-items: center;
+    }
+
+    .card {
+      width: 86px;
+      height: 122px;
+      position: relative;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      color: #172018;
+      background: linear-gradient(145deg, #fffaf0, #d9dfd1);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+      transform-origin: center bottom;
+      animation: dealCard 0.34s cubic-bezier(.18,.88,.28,1.22) both;
+    }
+
+    .card.red {
+      color: #a21d2b;
+    }
+
+    .card.back {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), transparent 20%),
+        repeating-linear-gradient(45deg, #182d34 0 7px, #244a46 7px 14px);
+      color: transparent;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .card .rank {
+      position: absolute;
+      top: 8px;
+      left: 9px;
+      font-size: 1.35rem;
+      font-weight: 950;
+    }
+
+    .card .suit {
+      position: absolute;
+      right: 9px;
+      bottom: 8px;
+      font-size: 0.92rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+    }
+
+    .card .pip {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 1.6rem;
+      font-weight: 950;
+      opacity: 0.8;
+    }
+
+    .hand-zone {
+      padding: 0.7rem;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .hand-zone.active {
+      border-color: rgba(98, 215, 255, 0.5);
+      background: rgba(98, 215, 255, 0.06);
+    }
+
+    .player-hands {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .message-line {
+      padding: 0.8rem 1rem;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.19);
+      color: var(--gold-2);
+      font-weight: 850;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .controls {
+      padding: 0.85rem;
+      display: grid;
+      gap: 0.75rem;
+      background: rgba(7, 12, 14, 0.35);
+    }
+
+    .bet-row, .action-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+
+    .bet-row {
+      align-items: stretch;
+      padding: 0.55rem;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .bet-main, .bet-step-group {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .bet-main {
+      padding-right: 0.55rem;
+      border-right: 1px solid var(--line);
+    }
+
+    .bet-step-group {
+      padding: 0.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .bet-row label {
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+    }
+
+    input[type="number"] {
+      width: 150px;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0.6rem 0.7rem;
+      color: var(--ink);
+      background: rgba(0, 0, 0, 0.25);
+      outline: none;
+    }
+
+    .mini-btn {
+      min-height: 38px;
+      min-width: 54px;
+      padding: 0.45rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.07);
+      font-weight: 850;
+    }
+
+    .mini-btn.down {
+      color: #ffc5cb;
+      background: rgba(255, 76, 96, 0.1);
+    }
+
+    .mini-btn.up {
+      color: #bdffd8;
+      background: rgba(83, 214, 140, 0.1);
+    }
+
+    .choice-box {
+      display: none;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      padding: 0.65rem;
+      border: 1px solid rgba(98, 215, 255, 0.34);
+      border-radius: 8px;
+      background: rgba(98, 215, 255, 0.08);
+    }
+
+    .choice-box.active {
+      display: flex;
+    }
+
+    .choice-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.55rem;
+      background: rgba(255, 255, 255, 0.08);
+      font-weight: 900;
+    }
+
+    .peek-box {
+      padding: 0.7rem;
+      border: 1px solid rgba(98, 215, 255, 0.34);
+      border-radius: 8px;
+      color: #d8f7ff;
+      background: rgba(98, 215, 255, 0.08);
+      font-weight: 850;
+    }
+
+    .shop-panel {
+      display: none;
+    }
+
+    .shop-panel.active {
+      display: block;
+    }
+
+    .shop-grid {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .shop-card, .upgrade-card {
+      padding: 0.72rem;
+    }
+
+    .shop-card h3, .upgrade-card h3 {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin: 0 0 0.35rem;
+      font-size: 1rem;
+      color: var(--gold-2);
+    }
+
+    .shop-card p, .upgrade-card p {
+      margin: 0 0 0.65rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+
+    .log {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: 0.85rem;
+      max-height: 220px;
+      overflow: auto;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.35;
+    }
+
+    .log-entry {
+      padding: 0.5rem;
+      border-left: 3px solid rgba(243, 189, 78, 0.45);
+      background: rgba(255, 255, 255, 0.045);
+      border-radius: 4px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 1rem;
+      background: rgba(3, 8, 10, 0.82);
+      backdrop-filter: blur(10px);
+    }
+
+    .overlay.active {
+      display: grid;
+    }
+
+    .modal {
+      width: min(560px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.2rem;
+      background: var(--panel-strong);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+    }
+
+    .modal h2 {
+      margin: 0 0 0.6rem;
+      font-size: clamp(1.5rem, 4vw, 2.3rem);
+      text-transform: uppercase;
+    }
+
+    .modal p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .burst {
+      animation: burst 0.42s ease both;
+    }
+
+    .shake {
+      animation: shake 0.38s ease both;
+    }
+
+    @keyframes tableDrift {
+      from { background-position: 0 0; }
+      to { background-position: 148px 74px; }
+    }
+
+    @keyframes feltPulse {
+      0%, 100% { opacity: 0.34; }
+      50% { opacity: 0.52; }
+    }
+
+    @keyframes dealCard {
+      from {
+        opacity: 0;
+        transform: translateY(-22px) rotate(-5deg) scale(0.92);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+      }
+    }
+
+    @keyframes burst {
+      0% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.045); filter: brightness(1.35); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+      75% { transform: translateX(-3px); }
+    }
+
+    @media (max-width: 1120px) {
+      .topbar, .table-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .shop-panel {
+        display: block;
+      }
+
+      .shop-panel:not(.active) {
+        opacity: 0.72;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .quick-rules, .status-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .card {
+        width: 70px;
+        height: 100px;
+      }
+
+      .cards-row {
+        min-height: 112px;
+      }
+
+      .phase-actions, .bet-row, .action-row {
+        align-items: stretch;
+      }
+
+      .primary-btn, .ghost-btn, .danger-btn, .mini-btn, input[type="number"] {
+        flex: 1 1 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="menuScreen" class="screen menu active">
+    <section class="menu-card">
+      <div class="beta-stamp">Open Beta Build</div>
+      <h1>BLACKJACK:<br>ANTEFALL</h1>
+      <p class="subtitle">A beta blackjack roguelite about climbing antes, clearing two blinds and a boss blind, then spending win tokens on jokers and upgrades before the pressure rises again.</p>
+      <div class="menu-actions">
+        <button id="startBtn" class="primary-btn">Start Run</button>
+        <button id="howBtn" class="ghost-btn">Beta Rules</button>
+      </div>
+      <div class="quick-rules">
+        <div class="rule-tile"><strong>$100 Start</strong><span>Drop below 70% of your run start and the table ends you.</span></div>
+        <div class="rule-tile"><strong>Ante Goal</strong><span>Earn the profit target before the ante advances.</span></div>
+        <div class="rule-tile"><strong>Blinds</strong><span>Small blind, big blind, then a boss blind close each ante.</span></div>
+        <div class="rule-tile"><strong>Beta Notice</strong><span>Balance and joker interactions are intentionally visible and experimental.</span></div>
+      </div>
+    </section>
+  </main>
+
+  <main id="gameScreen" class="screen">
+    <div class="game-shell">
+      <header class="topbar">
+        <div class="brand-strip">
+          <div class="brand-title">BLACKJACK: ANTEFALL <small>Beta State - systems may be spicy</small></div>
+          <button id="menuBtn" class="ghost-btn">Menu</button>
+        </div>
+        <div id="stats" class="status-strip"></div>
+        <div class="phase-actions">
+          <button id="shopToggleBtn" class="ghost-btn">Shop</button>
+          <button id="nextBlindBtn" class="primary-btn" disabled>Next Blind</button>
+        </div>
+      </header>
+
+      <section class="table-grid">
+        <aside class="side-panel">
+          <div class="panel-title">Run Status <span>Beta</span></div>
+          <div class="meter"><div id="profitMeter" class="meter-fill"></div></div>
+          <div id="blindList" class="blind-list"></div>
+          <div class="panel-title" style="margin-top:1rem;">Owned Jokers <span id="jokerCount">0</span></div>
+          <div id="ownedJokers" class="joker-list"></div>
+          <div class="panel-title" style="margin-top:1rem;">Event Log <span>Live</span></div>
+          <div id="log" class="log"></div>
+        </aside>
+
+        <section class="table-panel" id="tablePanel">
+          <div class="felt"></div>
+          <div class="table-section">
+            <div class="hand-header"><span>Dealer</span><span id="dealerTotal" class="hand-total">Total ?</span></div>
+            <div id="dealerCards" class="cards-row"></div>
+          </div>
+          <div id="messageLine" class="message-line">Welcome to the beta table. Set your bet and clear the blind.</div>
+          <div class="table-section">
+            <div class="hand-header"><span>Player</span><span id="playerTotal" class="hand-total">Total 0</span></div>
+            <div id="playerHands" class="player-hands"></div>
+          </div>
+          <div class="controls">
+            <div id="xrayBox" class="peek-box" style="display:none;"></div>
+            <div id="choiceBox" class="choice-box"></div>
+            <div class="bet-row">
+              <div class="bet-main">
+                <label for="betInput">Bet</label>
+                <input id="betInput" type="number" min="1" step="1" value="10">
+                <button class="mini-btn" data-bet="min">Min</button>
+                <button class="mini-btn" data-bet="max">Max</button>
+              </div>
+              <div class="bet-step-group">
+                <button class="mini-btn down" data-bet-adjust="-100">-100</button>
+                <button class="mini-btn down" data-bet-adjust="-75">-75</button>
+                <button class="mini-btn down" data-bet-adjust="-50">-50</button>
+                <button class="mini-btn down" data-bet-adjust="-25">-25</button>
+                <button class="mini-btn down" data-bet-adjust="-10">-10</button>
+              </div>
+              <div class="bet-step-group">
+                <button class="mini-btn up" data-bet-adjust="10">+10</button>
+                <button class="mini-btn up" data-bet-adjust="25">+25</button>
+                <button class="mini-btn up" data-bet-adjust="50">+50</button>
+                <button class="mini-btn up" data-bet-adjust="75">+75</button>
+                <button class="mini-btn up" data-bet-adjust="100">+100</button>
+              </div>
+              <button id="dealBtn" class="primary-btn">Deal</button>
+            </div>
+            <div class="action-row">
+              <button id="hitBtn" class="ghost-btn" disabled>Hit</button>
+              <button id="standBtn" class="ghost-btn" disabled>Stand</button>
+              <button id="doubleBtn" class="ghost-btn" disabled>Double</button>
+              <button id="tripleBtn" class="ghost-btn" disabled>Triple</button>
+              <button id="splitBtn" class="ghost-btn" disabled>Split</button>
+            </div>
+          </div>
+        </section>
+
+        <aside id="shopPanel" class="shop-panel">
+          <div class="panel-title">Shop <span>Win Tokens</span></div>
+          <div id="shopGrid" class="shop-grid"></div>
+          <div class="panel-title" style="margin-top:1rem;">Upgrades <span>Permanent</span></div>
+          <div id="upgradeGrid" class="shop-grid"></div>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <div id="modalOverlay" class="overlay">
+    <div class="modal">
+      <h2 id="modalTitle">Beta Rules</h2>
+      <p id="modalBody"></p>
+      <div class="menu-actions">
+        <button id="modalCloseBtn" class="primary-btn">Got It</button>
+        <button id="modalNewRunBtn" class="primary-btn" hidden>New Run</button>
+        <button id="modalMenuBtn" class="ghost-btn" hidden>Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const START_CASH = 100;
+    const LOSS_FLOOR_RATIO = 0.7;
+    const BASE_ANTE_TARGET = 300;
+    const ANTE_SCALE = 1.5;
+    const SUITS = ["HEARTS", "DIAMONDS", "CLUBS", "SPADES"];
+    const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    const SOUNDS = {
+      draw: new Audio("carddraw.mp3"),
+      lose: new Audio("lose.mp3"),
+      win: new Audio("Winsound.mp3")
+    };
+
+    const JOKERS = [
+      { id: "insurance", name: "Insurance", cost: 3, text: "If a hand busts, lower its total by 3 and lose $200." },
+      { id: "xray", name: "Xray", cost: 10, text: "View the next card waiting in the shoe." },
+      { id: "flush", name: "Flush", cost: 7, text: "Same-suit hands pay $200 per ante passed. The card displays the current payout." },
+      { id: "lastChance", name: "Last Chance", cost: 7, text: "If the dealer beats you, destroy their first card and score again." },
+      { id: "triple", name: "Triple", cost: 5, text: "Unlock Triple: triple your bet and draw 2 additional cards." }
+    ];
+
+    const state = {
+      screen: "menu",
+      cash: START_CASH,
+      runStart: START_CASH,
+      tokens: 0,
+      ante: 1,
+      anteStartCash: START_CASH,
+      blindStartCash: START_CASH,
+      blindProfit: 0,
+      anteTarget: BASE_ANTE_TARGET,
+      blind: 0,
+      phase: "betting",
+      deck: [],
+      dealer: [],
+      dealerHidden: true,
+      playerHands: [],
+      activeHand: 0,
+      currentBet: 10,
+      jokers: {},
+      upgrades: {
+        playerBust: 21,
+        dealerBust: 21,
+        pickTwo: false
+      },
+      waitingChoice: null,
+      log: []
+    };
+
+    const el = {
+      menuScreen: document.getElementById("menuScreen"),
+      gameScreen: document.getElementById("gameScreen"),
+      startBtn: document.getElementById("startBtn"),
+      howBtn: document.getElementById("howBtn"),
+      menuBtn: document.getElementById("menuBtn"),
+      stats: document.getElementById("stats"),
+      profitMeter: document.getElementById("profitMeter"),
+      blindList: document.getElementById("blindList"),
+      ownedJokers: document.getElementById("ownedJokers"),
+      jokerCount: document.getElementById("jokerCount"),
+      log: document.getElementById("log"),
+      dealerCards: document.getElementById("dealerCards"),
+      dealerTotal: document.getElementById("dealerTotal"),
+      playerHands: document.getElementById("playerHands"),
+      playerTotal: document.getElementById("playerTotal"),
+      messageLine: document.getElementById("messageLine"),
+      betInput: document.getElementById("betInput"),
+      dealBtn: document.getElementById("dealBtn"),
+      hitBtn: document.getElementById("hitBtn"),
+      standBtn: document.getElementById("standBtn"),
+      doubleBtn: document.getElementById("doubleBtn"),
+      tripleBtn: document.getElementById("tripleBtn"),
+      splitBtn: document.getElementById("splitBtn"),
+      xrayBox: document.getElementById("xrayBox"),
+      choiceBox: document.getElementById("choiceBox"),
+      shopPanel: document.getElementById("shopPanel"),
+      shopToggleBtn: document.getElementById("shopToggleBtn"),
+      nextBlindBtn: document.getElementById("nextBlindBtn"),
+      shopGrid: document.getElementById("shopGrid"),
+      upgradeGrid: document.getElementById("upgradeGrid"),
+      tablePanel: document.getElementById("tablePanel"),
+      modalOverlay: document.getElementById("modalOverlay"),
+      modalTitle: document.getElementById("modalTitle"),
+      modalBody: document.getElementById("modalBody"),
+      modalCloseBtn: document.getElementById("modalCloseBtn"),
+      modalNewRunBtn: document.getElementById("modalNewRunBtn"),
+      modalMenuBtn: document.getElementById("modalMenuBtn")
+    };
+
+    function money(value) {
+      const sign = value < 0 ? "-" : "";
+      return `${sign}$${Math.abs(Math.round(value)).toLocaleString()}`;
+    }
+
+    function playSound(name) {
+      const sound = SOUNDS[name];
+      if (!sound) return;
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+
+    function blindName(index = state.blind) {
+      return ["Small Blind", "Big Blind", "Boss Blind"][index] || "Cleared";
+    }
+
+
+    function buildDeck() {
+      const deck = [];
+      for (const suit of SUITS) {
+        for (const rank of RANKS) deck.push({ rank, suit });
+      }
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      return deck;
+    }
+
+    function ensureDeck(count = 8) {
+      if (state.deck.length < count) state.deck.push(...buildDeck());
+    }
+
+    function cardValue(card) {
+      if (card.rank === "A") return 11;
+      if (["K", "Q", "J"].includes(card.rank)) return 10;
+      return Number(card.rank);
+    }
+
+    function totalFor(cards) {
+      let total = cards.reduce((sum, card) => sum + cardValue(card), 0);
+      let aces = cards.filter(card => card.rank === "A").length;
+      while (total > 21 && aces > 0) {
+        total -= 10;
+        aces--;
+      }
+      return total;
+    }
+
+    function isBust(cards, limit) {
+      return totalFor(cards) > limit;
+    }
+
+    function describeCard(card) {
+      return `${card.rank} of ${card.suit}`;
+    }
+
+    function drawRaw() {
+      ensureDeck();
+      const card = state.deck.shift();
+      playSound("draw");
+      return card;
+    }
+
+    function requestDraw(callback) {
+      ensureDeck(10);
+      if (state.upgrades.pickTwo && state.phase === "playing") {
+        const choices = [drawRaw(), drawRaw()];
+        state.waitingChoice = { choices, callback };
+        render();
+        return null;
+      }
+      const card = drawRaw();
+      callback(card);
+      return card;
+    }
+
+    function addLog(message) {
+      state.log.unshift(message);
+      state.log = state.log.slice(0, 12);
+    }
+
+    function setMessage(message, effect = "") {
+      el.messageLine.textContent = message;
+      if (effect) {
+        el.tablePanel.classList.remove(effect);
+        void el.tablePanel.offsetWidth;
+        el.tablePanel.classList.add(effect);
+      }
+    }
+
+    function showScreen(name) {
+      if (!el.menuScreen || !el.gameScreen) return;
+      state.screen = name;
+      el.menuScreen.classList.toggle("active", name === "menu");
+      el.gameScreen.classList.toggle("active", name === "game");
+    }
+
+    function hideModal() {
+      el.modalOverlay.classList.remove("active");
+    }
+
+    function showModal(title, body, options = {}) {
+      const isGameOver = options.type === "gameover";
+      el.modalTitle.textContent = title;
+      el.modalBody.textContent = body;
+      el.modalCloseBtn.hidden = isGameOver;
+      el.modalNewRunBtn.hidden = !isGameOver;
+      el.modalMenuBtn.hidden = !isGameOver;
+      el.modalOverlay.classList.add("active");
+    }
+
+    function newRun() {
+      hideModal();
+      state.cash = START_CASH;
+      state.runStart = START_CASH;
+      state.tokens = 0;
+      state.ante = 1;
+      state.anteStartCash = START_CASH;
+      state.blindStartCash = START_CASH;
+      state.blindProfit = 0;
+      state.anteTarget = BASE_ANTE_TARGET;
+      state.blind = 0;
+      state.phase = "betting";
+      state.deck = buildDeck();
+      state.dealer = [];
+      state.dealerHidden = true;
+      state.playerHands = [];
+      state.activeHand = 0;
+      state.currentBet = 10;
+      state.jokers = {};
+      state.upgrades = { playerBust: 21, dealerBust: 21, pickTwo: false };
+      state.waitingChoice = null;
+      state.log = ["Run started in beta. Survive the antes."];
+      el.betInput.value = 10;
+      showScreen("game");
+      render();
+      setMessage("Choose a bet and deal into the Small Blind.");
+    }
+
+    function beginHand() {
+      if (state.phase !== "betting") return;
+      const bet = Math.floor(Number(el.betInput.value));
+      if (!Number.isFinite(bet) || bet < 1) {
+        setMessage("Enter a bet of at least $1.", "shake");
+        return;
+      }
+      if (bet > state.cash) {
+        setMessage("You cannot bet more cash than you have.", "shake");
+        return;
+      }
+      state.currentBet = bet;
+      state.cash -= bet;
+      state.phase = "dealing";
+      state.dealer = [];
+      state.playerHands = [{ cards: [], bet, stood: false, done: false, doubled: false, tripled: false, result: "" }];
+      state.activeHand = 0;
+      state.dealerHidden = true;
+      state.waitingChoice = null;
+      ensureDeck(16);
+      state.playerHands[0].cards.push(drawRaw());
+      state.dealer.push(drawRaw());
+      state.playerHands[0].cards.push(drawRaw());
+      state.dealer.push(drawRaw());
+      state.phase = "playing";
+      addLog(`Bet ${money(bet)} into ${blindName()}.`);
+      setMessage(`${blindName()} is live. Beat the dealer before your floor collapses.`, "burst");
+      checkImmediateBlackjack();
+      render();
+    }
+
+    function checkImmediateBlackjack() {
+      const hand = state.playerHands[0];
+      const playerBlackjack = hand.cards.length === 2 && totalFor(hand.cards) === 21;
+      const dealerBlackjack = totalFor(state.dealer) === 21;
+      if (playerBlackjack || dealerBlackjack) {
+        state.dealerHidden = false;
+        state.phase = "settling";
+        settleHands();
+      }
+    }
+
+    function activeHand() {
+      return state.playerHands[state.activeHand];
+    }
+
+    function hit() {
+      const hand = activeHand();
+      requestDraw(card => {
+        hand.cards.push(card);
+        addLog(`Drew ${describeCard(card)}.`);
+        afterPlayerDraw(hand);
+      });
+      render();
+    }
+
+    function afterPlayerDraw(hand) {
+      if (isBust(hand.cards, state.upgrades.playerBust)) {
+        if (state.jokers.insurance) {
+          state.cash -= 200;
+          hand.insured = true;
+          addLog("Insurance triggered: total reduced by 3 and $200 paid.");
+        }
+        if (isBustAdjusted(hand)) {
+          hand.done = true;
+          hand.result = "Busted";
+          hand.lossSoundPlayed = true;
+          playSound("lose");
+          setMessage(`Hand busted above ${state.upgrades.playerBust}.`, "shake");
+          advanceHand();
+          return;
+        }
+      }
+      setMessage(`Drew into ${totalWithInsurance(hand)}. Decide your next move.`);
+    }
+
+    function totalWithInsurance(hand) {
+      return totalFor(hand.cards) - (hand.insured ? 3 : 0);
+    }
+
+    function isBustAdjusted(hand) {
+      return totalWithInsurance(hand) > state.upgrades.playerBust;
+    }
+
+    function stand() {
+      const hand = activeHand();
+      hand.stood = true;
+      hand.done = true;
+      addLog(`Stood on ${totalWithInsurance(hand)}.`);
+      advanceHand();
+      render();
+    }
+
+    function doubleDown() {
+      const hand = activeHand();
+      const extra = hand.bet;
+      if (state.cash < extra) {
+        setMessage("Not enough cash to double.", "shake");
+        return;
+      }
+      state.cash -= extra;
+      hand.bet += extra;
+      hand.doubled = true;
+      requestDraw(card => {
+        hand.cards.push(card);
+        addLog(`Doubled to ${money(hand.bet)} and drew ${describeCard(card)}.`);
+        hand.done = true;
+        afterPlayerDraw(hand);
+        if (!isBustAdjusted(hand)) advanceHand();
+      });
+      render();
+    }
+
+    function tripleDown() {
+      const hand = activeHand();
+      const extra = hand.bet * 2;
+      if (!state.jokers.triple) return;
+      if (state.cash < extra) {
+        setMessage("Not enough cash to triple.", "shake");
+        return;
+      }
+      state.cash -= extra;
+      hand.bet += extra;
+      hand.tripled = true;
+      const first = drawRaw();
+      const second = drawRaw();
+      hand.cards.push(first, second);
+      addLog(`Tripled to ${money(hand.bet)} and drew ${describeCard(first)} plus ${describeCard(second)}.`);
+      hand.done = true;
+      if (isBust(hand.cards, state.upgrades.playerBust) && state.jokers.insurance) {
+        state.cash -= 200;
+        hand.insured = true;
+        addLog("Insurance triggered after Triple.");
+      }
+      if (isBustAdjusted(hand)) {
+        hand.result = "Busted";
+        hand.lossSoundPlayed = true;
+        playSound("lose");
+        setMessage("Triple burned too hot and busted.", "shake");
+      }
+      advanceHand();
+      render();
+    }
+
+    function splitHand() {
+      const hand = activeHand();
+      if (!canSplit(hand)) return;
+      if (state.cash < hand.bet) {
+        setMessage("Not enough cash to split.", "shake");
+        return;
+      }
+      state.cash -= hand.bet;
+      const secondCard = hand.cards.pop();
+      const newHand = { cards: [secondCard], bet: hand.bet, stood: false, done: false, doubled: false, tripled: false, result: "" };
+      state.playerHands.splice(state.activeHand + 1, 0, newHand);
+      hand.cards.push(drawRaw());
+      newHand.cards.push(drawRaw());
+      addLog("Split into two hands.");
+      setMessage("Split successful. Play each hand in order.", "burst");
+      render();
+    }
+
+    function canSplit(hand) {
+      return state.phase === "playing" && hand && hand.cards.length === 2 && cardValue(hand.cards[0]) === cardValue(hand.cards[1]);
+    }
+
+    function advanceHand() {
+      const next = state.playerHands.findIndex((hand, index) => index > state.activeHand && !hand.done);
+      if (next >= 0) {
+        state.activeHand = next;
+        setMessage(`Hand ${next + 1} is active.`);
+      } else {
+        playDealer();
+      }
+    }
+
+    function playDealer() {
+      state.phase = "dealer";
+      state.dealerHidden = false;
+      const liveHands = state.playerHands.filter(hand => !isBustAdjusted(hand));
+      if (!liveHands.length) {
+        settleHands();
+        return;
+      }
+      while (totalFor(state.dealer) < 17 && !isBust(state.dealer, state.upgrades.dealerBust)) {
+        state.dealer.push(drawRaw());
+      }
+      settleHands();
+    }
+
+    function settleHands() {
+      state.phase = "settling";
+      state.dealerHidden = false;
+      let dealerCards = [...state.dealer];
+      let dealerTotal = totalFor(dealerCards);
+      const dealerBusted = dealerTotal > state.upgrades.dealerBust;
+      let lastChanceUsed = false;
+      let totalReturn = 0;
+      let totalProfit = 0;
+
+      const needsLastChance = state.jokers.lastChance && !dealerBusted && state.playerHands.some(hand => {
+        const pTotal = totalWithInsurance(hand);
+        return pTotal <= state.upgrades.playerBust && dealerTotal <= state.upgrades.dealerBust && dealerTotal > pTotal;
+      });
+
+      if (needsLastChance && dealerCards.length > 1) {
+        dealerCards.shift();
+        state.dealer = dealerCards;
+        dealerTotal = totalFor(dealerCards);
+        lastChanceUsed = true;
+        addLog("Last Chance destroyed the dealer's first card.");
+      }
+
+      for (const hand of state.playerHands) {
+        const pTotal = totalWithInsurance(hand);
+        let profit = -hand.bet;
+        let payout = 0;
+        let wonHand = false;
+        let pushedHand = false;
+        const nowDealerBust = dealerTotal > state.upgrades.dealerBust;
+        if (pTotal > state.upgrades.playerBust) {
+          hand.result = "Lost";
+        } else if (nowDealerBust || pTotal > dealerTotal) {
+          payout = hand.bet * 2;
+          profit = payout - hand.bet;
+          hand.result = `Won +${money(profit)}`;
+          wonHand = true;
+        } else if (pTotal === dealerTotal) {
+          payout = hand.bet;
+          profit = 0;
+          hand.result = "Push";
+          pushedHand = true;
+        } else {
+          hand.result = "Lost";
+        }
+
+        const flushBonus = flushPayoutFor(hand);
+        if (flushBonus > 0) {
+          payout += flushBonus;
+          profit += flushBonus;
+          hand.result += ` + Flush ${money(flushBonus)}`;
+          addLog(`Flush paid ${money(flushBonus)}.`);
+        }
+
+        totalReturn += payout;
+        totalProfit += profit;
+        if (wonHand) playSound("win");
+        if (pushedHand) playSound("lose");
+        if (profit < 0 && !hand.lossSoundPlayed) playSound("lose");
+      }
+
+      state.cash += totalReturn;
+      state.blindProfit = state.cash - state.blindStartCash;
+      const clearCashTarget = state.blindStartCash + state.anteTarget;
+      const overflow = Math.max(0, state.blindProfit - state.anteTarget);
+      const cleared = state.cash >= clearCashTarget;
+      if (cleared) {
+        const gained = Math.floor(overflow / 50);
+        const convertedCash = gained * 50;
+        state.cash -= convertedCash;
+        state.tokens += gained;
+        state.blindProfit = state.cash - state.blindStartCash;
+        state.phase = "shop";
+        state.shopOpen = true;
+        addLog(`${blindName()} cleared at ${money(clearCashTarget)}. Converted ${money(convertedCash)} overflow into ${gained} win token(s).`);
+        setMessage(`Blind cleared! Converted ${money(convertedCash)} overflow into ${gained} win token(s).`, "burst");
+      } else {
+        state.phase = "betting";
+        setMessage(`Hand settled (${money(totalProfit)} profit). Need ${money(state.anteTarget - state.blindProfit)} more blind profit.`);
+      }
+
+      if (lastChanceUsed) setMessage(`Last Chance fired. Re-scored against dealer total ${dealerTotal}.`, "burst");
+      checkRunEnd();
+      render();
+    }
+
+    function flushPayoutFor(hand) {
+      if (!state.jokers.flush || hand.cards.length < 2) return 0;
+      const suit = hand.cards[0].suit;
+      if (!hand.cards.every(card => card.suit === suit)) return 0;
+      return Math.max(1, state.ante - 1) * 200;
+    }
+
+    function checkRunEnd() {
+      if (state.cash < state.runStart * LOSS_FLOOR_RATIO) {
+        state.phase = "gameover";
+        playSound("lose");
+        showModal("Run Lost - Beta", `You fell below ${money(state.runStart * LOSS_FLOOR_RATIO)}, which is 70% of your starting cash. Final cash: ${money(state.cash)}.`, { type: "gameover" });
+      }
+    }
+
+    function nextBlind() {
+      if (state.phase !== "shop") return;
+      if (state.blind < 2) {
+        state.blind++;
+        state.blindStartCash = state.cash;
+        state.blindProfit = 0;
+        state.phase = "betting";
+        state.dealer = [];
+        state.playerHands = [];
+        state.shopOpen = false;
+        setMessage(`Entering ${blindName()}. Set a bet and keep climbing.`);
+        addLog(`Advanced to ${blindName()}.`);
+      } else {
+        state.ante++;
+        state.blind = 0;
+        state.anteStartCash = state.cash;
+        state.blindStartCash = state.cash;
+        state.blindProfit = 0;
+        state.anteTarget = Math.round(BASE_ANTE_TARGET * Math.pow(ANTE_SCALE, state.ante - 1));
+        state.phase = "betting";
+        state.dealer = [];
+        state.playerHands = [];
+        state.shopOpen = false;
+        setMessage(`Ante ${state.ante} begins. New profit target: ${money(state.anteTarget)}.`);
+        addLog(`Ante ${state.ante} began. Target raised 1.5x.`);
+      }
+      render();
+    }
+
+    function buyJoker(id) {
+      const joker = JOKERS.find(item => item.id === id);
+      if (!joker || state.jokers[id] || state.tokens < joker.cost) return;
+      state.tokens -= joker.cost;
+      state.jokers[id] = true;
+      addLog(`Bought ${joker.name}.`);
+      render();
+    }
+
+    function buyUpgrade(id) {
+      if (id === "playerBust") {
+        if (state.upgrades.playerBust >= 25 || state.tokens < 4) return;
+        state.tokens -= 4;
+        state.upgrades.playerBust++;
+        addLog(`Player bust limit increased to ${state.upgrades.playerBust}.`);
+      }
+      if (id === "dealerBust") {
+        if (state.upgrades.dealerBust <= 19 || state.tokens < 4) return;
+        state.tokens -= 4;
+        state.upgrades.dealerBust--;
+        addLog(`Dealer bust limit decreased to ${state.upgrades.dealerBust}.`);
+      }
+      if (id === "pickTwo") {
+        if (state.upgrades.pickTwo || state.tokens < 9) return;
+        state.tokens -= 9;
+        state.upgrades.pickTwo = true;
+        addLog("Bought Pick 2 Draw.");
+      }
+      render();
+    }
+
+    function selectChoice(index) {
+      const waiting = state.waitingChoice;
+      if (!waiting) return;
+      const card = waiting.choices[index];
+      const other = waiting.choices[1 - index];
+      state.deck.unshift(other);
+      state.waitingChoice = null;
+      waiting.callback(card);
+      addLog(`Pick 2 selected ${describeCard(card)}. The other card returns next.`);
+      render();
+    }
+
+    function cardHtml(card, hidden = false) {
+      if (hidden) return `<div class="card back"><span class="pip">ANTE</span></div>`;
+      const red = card.suit === "HEARTS" || card.suit === "DIAMONDS";
+      return `<div class="card ${red ? "red" : ""}">
+        <span class="rank">${card.rank}</span>
+        <span class="pip">${card.rank}</span>
+        <span class="suit">${card.suit}</span>
+      </div>`;
+    }
+
+    function renderStats() {
+      const floor = state.runStart * LOSS_FLOOR_RATIO;
+      const stats = [
+        ["Cash", money(state.cash)],
+        ["Win Tokens", state.tokens],
+        ["Ante", state.ante],
+        ["Blind", blindName()],
+        ["Target", money(state.anteTarget)],
+        ["Loss Floor", money(floor)]
+      ];
+      el.stats.innerHTML = stats.map(([label, value]) => `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`).join("");
+      const progress = Math.max(0, Math.min(100, (state.blindProfit / state.anteTarget) * 100));
+      el.profitMeter.style.width = `${progress}%`;
+    }
+
+    function renderBlinds() {
+      el.blindList.innerHTML = ["Small Blind", "Big Blind", "Boss Blind"].map((name, index) => {
+        const cls = index < state.blind ? "done" : index === state.blind ? "active" : "";
+        const tag = index === 2 ? "Final blind" : "Standard blind";
+        return `<div class="blind-step ${cls}"><strong>${name}</strong><br><span>${tag}</span></div>`;
+      }).join("");
+    }
+
+    function renderOwned() {
+      const owned = JOKERS.filter(joker => state.jokers[joker.id]);
+      el.jokerCount.textContent = owned.length;
+      if (!owned.length) {
+        el.ownedJokers.innerHTML = `<div class="owned-joker"><strong>No jokers yet</strong><p>Clear a blind, earn overflow tokens, then buy something strange.</p></div>`;
+        return;
+      }
+      el.ownedJokers.innerHTML = owned.map(joker => {
+        const bonus = joker.id === "flush" ? ` Current Flush: ${money(Math.max(1, state.ante - 1) * 200)}` : "";
+        return `<div class="owned-joker"><strong>${joker.name}<span>${joker.cost}T</span></strong><p>${joker.text}${bonus}</p></div>`;
+      }).join("");
+    }
+
+    function renderCards() {
+      el.dealerCards.innerHTML = state.dealer.map((card, index) => cardHtml(card, state.dealerHidden && index === 1)).join("");
+      el.dealerTotal.textContent = state.dealerHidden && state.dealer.length ? `Shown ${totalFor([state.dealer[0]])}` : `Total ${totalFor(state.dealer)} / Bust ${state.upgrades.dealerBust}`;
+      el.playerHands.innerHTML = state.playerHands.map((hand, index) => {
+        const total = totalWithInsurance(hand);
+        const flushBonus = flushPayoutFor(hand);
+        return `<div class="hand-zone ${index === state.activeHand && state.phase === "playing" ? "active" : ""}">
+          <div class="hand-header"><span>Hand ${index + 1} - Bet ${money(hand.bet)}</span><span class="hand-total">${total} / Bust ${state.upgrades.playerBust}${flushBonus ? ` - Flush pays ${money(flushBonus)}` : ""}</span></div>
+          <div class="cards-row">${hand.cards.map(card => cardHtml(card)).join("")}</div>
+          ${hand.result ? `<div class="stat-label">${hand.result}</div>` : ""}
+        </div>`;
+      }).join("") || `<div class="cards-row"></div>`;
+      const hand = activeHand();
+      el.playerTotal.textContent = hand ? `Total ${totalWithInsurance(hand)} / Bust ${state.upgrades.playerBust}` : "Total 0";
+    }
+
+    function renderControls() {
+      const inBetting = state.phase === "betting";
+      const inPlaying = state.phase === "playing" && !state.waitingChoice;
+      const hand = activeHand();
+      const openingMove = hand && hand.cards.length === 2 && !hand.doubled && !hand.tripled;
+      el.betInput.disabled = !inBetting;
+      el.dealBtn.disabled = !inBetting || state.cash <= 0;
+      document.querySelectorAll("[data-bet], [data-bet-adjust]").forEach(button => {
+        button.disabled = !inBetting;
+      });
+      el.hitBtn.disabled = !inPlaying;
+      el.standBtn.disabled = !inPlaying;
+      el.doubleBtn.disabled = !inPlaying || !openingMove || state.cash < (hand ? hand.bet : 0);
+      el.tripleBtn.disabled = !inPlaying || !state.jokers.triple || !openingMove || state.cash < (hand ? hand.bet * 2 : 0);
+      el.splitBtn.disabled = !inPlaying || !canSplit(hand) || state.cash < (hand ? hand.bet : 0);
+      el.nextBlindBtn.disabled = state.phase !== "shop";
+      el.shopPanel.classList.toggle("active", state.phase === "shop" || state.shopOpen);
+      renderXray();
+      renderChoice();
+    }
+
+    function renderXray() {
+      if (!state.jokers.xray || !state.deck.length || state.phase === "menu") {
+        el.xrayBox.style.display = "none";
+        return;
+      }
+      el.xrayBox.style.display = "block";
+      const next = state.waitingChoice ? state.waitingChoice.choices[0] : state.deck[0];
+      const extra = state.upgrades.pickTwo && state.phase === "playing" && !state.waitingChoice && state.deck[1] ? ` Pick 2 preview: ${describeCard(state.deck[0])} or ${describeCard(state.deck[1])}.` : "";
+      el.xrayBox.textContent = `Xray: next card is ${describeCard(next)}.${extra}`;
+    }
+
+    function renderChoice() {
+      if (!state.waitingChoice) {
+        el.choiceBox.classList.remove("active");
+        el.choiceBox.innerHTML = "";
+        return;
+      }
+      el.choiceBox.classList.add("active");
+      el.choiceBox.innerHTML = `<strong>Pick 2 Draw:</strong>` + state.waitingChoice.choices.map((card, index) => {
+        return `<button class="choice-card" onclick="selectChoice(${index})">${describeCard(card)}</button>`;
+      }).join("");
+    }
+
+    function renderShop() {
+      el.shopGrid.innerHTML = JOKERS.map(joker => {
+        const owned = state.jokers[joker.id];
+        const flushText = joker.id === "flush" ? ` Current payout: ${money(Math.max(1, state.ante - 1) * 200)}.` : "";
+        return `<div class="shop-card">
+          <h3>${joker.name}<span>${joker.cost}T</span></h3>
+          <p>${joker.text}${flushText}</p>
+          <button class="primary-btn" onclick="buyJoker('${joker.id}')" ${owned || state.tokens < joker.cost ? "disabled" : ""}>${owned ? "Owned" : "Buy Joker"}</button>
+        </div>`;
+      }).join("");
+
+      const upgrades = [
+        { id: "playerBust", name: "Raise Player Bust", cost: 4, text: `Increase your bust limit by 1. Current: ${state.upgrades.playerBust}. Maximum: 25.`, disabled: state.upgrades.playerBust >= 25 },
+        { id: "dealerBust", name: "Lower Dealer Bust", cost: 4, text: `Decrease dealer bust limit by 1. Current: ${state.upgrades.dealerBust}. Minimum: 19.`, disabled: state.upgrades.dealerBust <= 19 },
+        { id: "pickTwo", name: "Pick 2 Draw", cost: 9, text: "When drawing, choose 1 of 2 cards. Compatible with Xray preview.", disabled: state.upgrades.pickTwo }
+      ];
+      el.upgradeGrid.innerHTML = upgrades.map(up => `<div class="upgrade-card">
+        <h3>${up.name}<span>${up.cost}T</span></h3>
+        <p>${up.text}</p>
+        <button class="primary-btn" onclick="buyUpgrade('${up.id}')" ${up.disabled || state.tokens < up.cost ? "disabled" : ""}>${up.disabled ? "Maxed" : "Buy Upgrade"}</button>
+      </div>`).join("");
+    }
+
+    function renderLog() {
+      el.log.innerHTML = state.log.map(item => `<div class="log-entry">${item}</div>`).join("");
+    }
+
+    function render() {
+      renderStats();
+      renderBlinds();
+      renderOwned();
+      renderCards();
+      renderControls();
+      renderShop();
+      renderLog();
+      const maxBet = Math.max(1, Math.floor(state.cash));
+      el.betInput.max = maxBet;
+      if (state.phase === "betting" && Number(el.betInput.value) > maxBet) el.betInput.value = maxBet;
+    }
+
+    function clampBet(value) {
+      const maxBet = Math.max(1, Math.floor(state.cash));
+      return Math.max(1, Math.min(Math.floor(value), maxBet));
+    }
+
+    el.startBtn.addEventListener("click", newRun);
+    el.howBtn.addEventListener("click", () => showModal("BLACKJACK: ANTEFALL Beta", "Clear each blind by reaching the ante profit target. You can gamble as many hands as you want, but falling below 70% of your run starting cash loses the run. Every ante has Small Blind, Big Blind, and Boss Blind. After clearing a blind, overflow profit converts into win tokens at 1 token per $50."));
+    el.menuBtn.addEventListener("click", () => {
+      hideModal();
+      showScreen("menu");
+    });
+    el.modalCloseBtn.addEventListener("click", hideModal);
+    el.modalNewRunBtn.addEventListener("click", newRun);
+    el.modalMenuBtn.addEventListener("click", () => {
+      hideModal();
+      showScreen("menu");
+    });
+    el.dealBtn.addEventListener("click", beginHand);
+    el.hitBtn.addEventListener("click", hit);
+    el.standBtn.addEventListener("click", stand);
+    el.doubleBtn.addEventListener("click", doubleDown);
+    el.tripleBtn.addEventListener("click", tripleDown);
+    el.splitBtn.addEventListener("click", splitHand);
+    el.nextBlindBtn.addEventListener("click", nextBlind);
+    el.shopToggleBtn.addEventListener("click", () => {
+      state.shopOpen = !state.shopOpen;
+      renderControls();
+    });
+    document.querySelectorAll("[data-bet]").forEach(button => {
+      button.addEventListener("click", () => {
+        const value = button.dataset.bet === "max" ? Math.max(1, Math.floor(state.cash)) : 1;
+        el.betInput.value = clampBet(value);
+      });
+    });
+    document.querySelectorAll("[data-bet-adjust]").forEach(button => {
+      button.addEventListener("click", () => {
+        const current = Number(el.betInput.value) || 1;
+        el.betInput.value = clampBet(current + Number(button.dataset.betAdjust));
+      });
+    });
+
+    window.buyJoker = buyJoker;
+    window.buyUpgrade = buyUpgrade;
+    window.selectChoice = selectChoice;
+
+    document.querySelectorAll('button').forEach(button => button.type = 'button');
+
+    render();
+  </script>
+</body>
+</html>

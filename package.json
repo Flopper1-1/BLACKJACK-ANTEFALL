@@ -1,0 +1,31 @@
+{
+  "name": "blackjack-antefall",
+  "version": "1.0.0",
+  "description": "BLACKJACK: ANTEFALL packaged as an Electron desktop game.",
+  "main": "electron-main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win dir",
+    "portable": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.blackjackantefall.game",
+    "productName": "BLACKJACK ANTEFALL",
+    "files": [
+      "electron-main.js",
+      "index.html",
+      "carddraw.mp3",
+      "lose.mp3",
+      "Winsound.mp3"
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "electron-builder": "^25.1.8"
+  }
+}

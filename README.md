@@ -30,4 +30,4 @@ The built app is created in `dist/win-unpacked`.
 
 ## Version
 
-Current version: `v1.0.0`
+Current version: `v1.0.1`

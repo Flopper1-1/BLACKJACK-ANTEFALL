@@ -1,6 +1,6 @@
 {
   "name": "blackjack-antefall",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "BLACKJACK: ANTEFALL packaged as an Electron desktop game.",
   "main": "electron-main.js",
   "private": true,

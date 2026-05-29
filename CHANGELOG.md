@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.1
+
+- Updated Electron to version 42.3.0.
+- Cleaned up package.json dependencies.
+
 ## v1.0.0 - Initial Electron Release
 
 - Packaged BLACKJACK: ANTEFALL as a Windows Electron desktop app.

@@ -1397,39 +1397,44 @@
 
       state.cash += totalReturn;
       state.blindProfit = state.cash - state.blindStartCash;
-      const clearCashTarget = state.blindStartCash + state.anteTarget;
+      const targetThreshold = state.anteTarget;
       
-      console.log(`Hand Settled. Cash: ${state.cash}, Profit: ${state.blindProfit}, Target: ${state.anteTarget}`);
-
-      const overflow = Math.max(0, state.blindProfit - state.anteTarget);
-      const cleared = state.cash >= clearCashTarget;
+      const cleared = state.blindProfit >= targetThreshold;
       
       if (cleared) {
-        const gained = Math.floor(overflow / 50);
-        const convertedCash = gained * 50;
+        // Calculate excess profit above the target
+        const excessProfit = state.blindProfit - targetThreshold;
         
-        if (gained > 0) {
-          state.cash -= convertedCash;
-          state.tokens += gained;
+        // Award 1 token per full $50 of excess
+        const tokensToAward = Math.floor(excessProfit / 50);
+        
+        // REMOVE all excess profit that was converted to tokens from the player's cash
+        if (tokensToAward > 0) {
+          const cashToRemove = tokensToAward * 50;
+          state.cash -= cashToRemove;
+          state.tokens += tokensToAward;
+          
+          // Recalculate profit after removal
           state.blindProfit = state.cash - state.blindStartCash;
-          console.log(`Converted ${money(convertedCash)} overflow into ${gained} token(s). New Cash: ${state.cash}`);
-          addLog(`${blindName()} cleared. Converted ${money(convertedCash)} overflow into ${gained} token(s).`);
-          setMessage(`Blind cleared! Converted ${money(convertedCash)} overflow into ${gained} win token(s).`, "burst");
+          
+          addLog(`${blindName()} cleared! Converted ${money(cashToRemove)} excess into ${tokensToAward} token(s).`);
+          setMessage(`Blind cleared! Converted ${money(cashToRemove)} excess into ${tokensToAward} token(s).`, "burst");
         } else {
-          addLog(`${blindName()} cleared at ${money(clearCashTarget)}.`);
-          setMessage(`Blind cleared at ${money(clearCashTarget)}!`, "burst");
+          addLog(`${blindName()} cleared.`);
+          setMessage(`${blindName()} cleared!`, "burst");
         }
         
         state.phase = "shop";
         state.shopOpen = true;
       } else {
         state.phase = "betting";
-        setMessage(`Hand settled (${money(totalProfit)} profit). Need ${money(state.anteTarget - state.blindProfit)} more blind profit.`);
+        setMessage(`Hand settled (${money(totalProfit)} profit). Need ${money(targetThreshold - state.blindProfit)} more blind profit.`);
       }
 
       if (lastChanceUsed) setMessage(`Last Chance fired. Re-scored against dealer total ${dealerTotal}.`, "burst");
       checkRunEnd();
       render();
+      updateDiscordPresence();
     }
 
     function flushPayoutFor(hand) {

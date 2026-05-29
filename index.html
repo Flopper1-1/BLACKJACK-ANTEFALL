@@ -951,6 +951,16 @@
       log: []
     };
 
+    function updateDiscordPresence() {
+      if (window.electronAPI && window.electronAPI.updatePresence) {
+        window.electronAPI.updatePresence({
+          ante: state.ante,
+          cash: state.cash,
+          target: state.anteTarget
+        });
+      }
+    }
+
     const el = {
       menuScreen: document.getElementById("menuScreen"),
       gameScreen: document.getElementById("gameScreen"),
@@ -1087,6 +1097,7 @@
       state.screen = name;
       el.menuScreen.classList.toggle("active", name === "menu");
       el.gameScreen.classList.toggle("active", name === "game");
+      updateDiscordPresence();
     }
 
     function hideModal() {
@@ -1129,6 +1140,7 @@
       showScreen("game");
       render();
       setMessage("Choose a bet and deal into the Small Blind.");
+      updateDiscordPresence();
     }
 
     function beginHand() {
@@ -1405,6 +1417,7 @@
       if (lastChanceUsed) setMessage(`Last Chance fired. Re-scored against dealer total ${dealerTotal}.`, "burst");
       checkRunEnd();
       render();
+      updateDiscordPresence();
     }
 
     function flushPayoutFor(hand) {
@@ -1426,6 +1439,7 @@
       if (state.phase !== "shop") return;
       if (state.blind < 2) {
         state.blind++;
+        state.runStart = state.cash; // Update loss floor per blind
         state.blindStartCash = state.cash;
         state.blindProfit = 0;
         state.phase = "betting";
@@ -1433,10 +1447,11 @@
         state.playerHands = [];
         state.shopOpen = false;
         setMessage(`Entering ${blindName()}. Set a bet and keep climbing.`);
-        addLog(`Advanced to ${blindName()}.`);
+        addLog(`Advanced to ${blindName()}. Loss floor updated.`);
       } else {
         state.ante++;
         state.blind = 0;
+        state.runStart = state.cash; // Update loss floor per blind/ante
         state.anteStartCash = state.cash;
         state.blindStartCash = state.cash;
         state.blindProfit = 0;
@@ -1446,9 +1461,10 @@
         state.playerHands = [];
         state.shopOpen = false;
         setMessage(`Ante ${state.ante} begins. New profit target: ${money(state.anteTarget)}.`);
-        addLog(`Ante ${state.ante} began. Target raised 1.5x.`);
+        addLog(`Ante ${state.ante} began. Target raised 1.5x. Loss floor updated.`);
       }
       render();
+      updateDiscordPresence();
     }
 
     function buyJoker(id) {
@@ -1492,6 +1508,7 @@
       waiting.callback(card);
       addLog(`Pick 2 selected ${describeCard(card)}. The other card returns next.`);
       render();
+      updateDiscordPresence();
     }
 
     function cardHtml(card, hidden = false) {

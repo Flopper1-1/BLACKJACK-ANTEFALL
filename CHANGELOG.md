@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.2
+
+- Updated loss floor to update per blind.
+- Updated blind target scaling to 1.5x.
+- Fixed token conversion logic (1 token per $50 overflow).
+- Updated Discord Rich Presence to include Ante, Quota (Target), and Cash.
+- Added GitHub download button to Discord Rich Presence.
+- Added preload script for secure IPC communication.
+
 ## v1.0.1
 
 - Updated Electron to version 42.3.0.

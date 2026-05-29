@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const DiscordRPC = require("discord-rpc");
 
@@ -8,10 +8,15 @@ DiscordRPC.register(DISCORD_CLIENT_ID);
 const rpc = new DiscordRPC.Client({ transport: "ipc" });
 const startedAt = Date.now();
 
+let currentPresence = {
+  details: "Climbing the antes",
+  state: "Menu"
+};
+
 function setDiscordPresence() {
   rpc.setActivity({
-    details: "Climbing the antes",
-    state: "Playing BLACKJACK: ANTEFALL",
+    details: currentPresence.details,
+    state: currentPresence.state,
     startTimestamp: startedAt,
     largeImageKey: "logo",
     largeImageText: "BLACKJACK: ANTEFALL",
@@ -26,6 +31,16 @@ function setDiscordPresence() {
 
 rpc.on("ready", setDiscordPresence);
 
+ipcMain.on("update-presence", (event, data) => {
+  currentPresence = {
+    details: `Ante: ${data.ante} | Quota: $${data.target.toLocaleString()}`,
+    state: `Cash: $${Math.round(data.cash).toLocaleString()}`
+  };
+  if (rpc && rpc.setActivity) {
+    setDiscordPresence();
+  }
+});
+
 rpc.login({ clientId: DISCORD_CLIENT_ID }).catch(() => {});
 
 function createWindow() {
@@ -38,7 +53,8 @@ function createWindow() {
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      preload: path.join(__dirname, "preload.js")
     }
   });
 
